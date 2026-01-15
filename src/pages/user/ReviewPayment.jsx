@@ -25,7 +25,7 @@ function ReviewPayment() {
   const [processing, setProcessing] = useState(false);
   const [promoApplied, setPromoApplied] = useState(false);
 
-  const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+  const stripePromise = loadStripe(import.meta.env.NEXT_STRIPE_PUBLISHABLE_KEY);
 
   // Get data from location.state (passed from PassengerInfo)
   const {
