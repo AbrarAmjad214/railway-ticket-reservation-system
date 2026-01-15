@@ -25,7 +25,13 @@ function ReviewPayment() {
   const [processing, setProcessing] = useState(false);
   const [promoApplied, setPromoApplied] = useState(false);
 
-  const stripePromise = loadStripe(import.meta.env.NEXT_STRIPE_PUBLISHABLE_KEY);
+  const stripePublishableKey =
+    import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ||
+    import.meta.env.VITE_STRIPE_KEY;
+
+  const stripePromise = stripePublishableKey
+    ? loadStripe(stripePublishableKey)
+    : null;
 
   // Get data from location.state (passed from PassengerInfo)
   const {
@@ -211,11 +217,17 @@ function ReviewPayment() {
 
       console.log("Creating Stripe checkout session with payload:", payload);
 
+      const API_BASE_URL =import.meta.env.VITE_API_URL;
+
       const res = await fetch(
-        "http://localhost:5000/api/payments/create-checkout-session",
+        `${API_BASE_URL}/payments/create-checkout-session`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+          },
+          credentials: "include",
           body: JSON.stringify(payload),
         }
       );
@@ -239,8 +251,22 @@ function ReviewPayment() {
       }
 
       // Option B: If you return sessionId instead
-      const stripe = await stripePromise;
-      await stripe.redirectToCheckout({ sessionId: data.sessionId });
+      if (data?.sessionId) {
+        if (!stripePromise) {
+          toast.error("Stripe is not configured. Please contact support.");
+          return;
+        }
+        const stripe = await stripePromise;
+        if (!stripe) {
+          toast.error(
+            "Failed to initialize Stripe. Please refresh and try again."
+          );
+          return;
+        }
+        await stripe.redirectToCheckout({ sessionId: data.sessionId });
+      } else {
+        toast.error("Payment session ID not received. Please try again.");
+      }
     } catch (err) {
       console.error("Error in handleContinueToPayment:", err);
       toast.error("Something went wrong while creating payment session.");
