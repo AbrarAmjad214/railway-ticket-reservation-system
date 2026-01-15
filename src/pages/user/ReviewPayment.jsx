@@ -26,8 +26,8 @@ function ReviewPayment() {
   const [promoApplied, setPromoApplied] = useState(false);
 
   const stripePublishableKey =
-    import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ||
-    import.meta.env.VITE_STRIPE_KEY;
+    import.meta.env.NEXT_STRIPE_PUBLISHABLE_KEY ||
+    import.meta.env.STRIPE_KEY;
 
   const stripePromise = stripePublishableKey
     ? loadStripe(stripePublishableKey)
@@ -217,7 +217,7 @@ function ReviewPayment() {
 
       console.log("Creating Stripe checkout session with payload:", payload);
 
-      const API_BASE_URL =import.meta.env.VITE_API_URL;
+      const API_BASE_URL =import.meta.env.API_URL;
 
       const res = await fetch(
         `${API_BASE_URL}/payments/create-checkout-session`,
