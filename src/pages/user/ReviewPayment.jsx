@@ -25,9 +25,12 @@ function ReviewPayment() {
   const [processing, setProcessing] = useState(false);
   const [promoApplied, setPromoApplied] = useState(false);
 
+  // Stripe key - use environment variable or fallback
+  // For production, set this in Vercel environment variables
   const stripePublishableKey =
-    import.meta.env.NEXT_STRIPE_PUBLISHABLE_KEY ||
-    import.meta.env.STRIPE_KEY;
+    import.meta.env.PUBLIC_STRIPE_PUBLISHABLE_KEY ||
+    import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ||
+    "pk_test_51QJvL1P1I6qYh4hP5YwYvP8F7YrQ9Z5X8Q5Q5Q5Q5Q5Q5Q5Q5Q5Q5"; // Fallback for development
 
   const stripePromise = stripePublishableKey
     ? loadStripe(stripePublishableKey)
@@ -217,7 +220,20 @@ function ReviewPayment() {
 
       console.log("Creating Stripe checkout session with payload:", payload);
 
-      const API_BASE_URL =import.meta.env.API_URL;
+      // API URL - use environment variable or fallback
+      // For production, this will be set in Vercel
+      const API_BASE_URL =
+        import.meta.env.PUBLIC_API_URL ||
+        import.meta.env.VITE_API_URL ||
+        (import.meta.env.DEV
+          ? "http://localhost:5000/api"
+          : "https://railway-ticket-reservation-system-b.vercel.app/api");
+
+      console.log("API Base URL:", API_BASE_URL);
+      console.log(
+        "Full URL:",
+        `${API_BASE_URL}/payments/create-checkout-session`
+      );
 
       const res = await fetch(
         `${API_BASE_URL}/payments/create-checkout-session`,
@@ -232,7 +248,76 @@ function ReviewPayment() {
         }
       );
 
-      const data = await res.json();
+      // Check response status first
+      if (!res.ok) {
+        // Try to get error message from response
+        const contentType = res.headers.get("content-type");
+        let errorMessage = "Failed to start payment";
+
+        try {
+          if (contentType && contentType.includes("application/json")) {
+            const errorData = await res.json();
+            errorMessage =
+              errorData?.message || errorData?.error || errorMessage;
+          } else {
+            // Non-JSON response (HTML error page, etc.)
+            const text = await res.text();
+            console.error("Non-JSON error response:", text.substring(0, 500));
+
+            if (res.status === 404) {
+              errorMessage =
+                "Payment endpoint not found. Please check your API configuration.";
+            } else if (res.status === 401) {
+              errorMessage = "Unauthorized. Please login again.";
+            } else if (res.status === 403) {
+              errorMessage = "Access denied. Please check your permissions.";
+            } else if (res.status >= 500) {
+              errorMessage = "Server error occurred. Please try again later.";
+            }
+          }
+        } catch (parseError) {
+          console.error("Failed to parse error response:", parseError);
+          if (res.status === 404) {
+            errorMessage = "Payment endpoint not found.";
+          } else if (res.status >= 500) {
+            errorMessage = "Server error occurred.";
+          }
+        }
+
+        console.error("Payment session creation failed:", {
+          status: res.status,
+          statusText: res.statusText,
+          message: errorMessage,
+        });
+
+        toast.error(errorMessage);
+        setProcessing(false);
+        return;
+      }
+
+      // Parse successful JSON response
+      let data;
+      try {
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await res.text();
+          console.error(
+            "Expected JSON but got:",
+            contentType,
+            text.substring(0, 500)
+          );
+          toast.error("Server returned invalid response format.");
+          setProcessing(false);
+          return;
+        }
+
+        data = await res.json();
+      } catch (jsonError) {
+        console.error("Failed to parse JSON response:", jsonError);
+        toast.error("Failed to parse server response. Please try again.");
+        setProcessing(false);
+        return;
+      }
 
       if (!res.ok) {
         console.error("Payment session creation failed:", data);

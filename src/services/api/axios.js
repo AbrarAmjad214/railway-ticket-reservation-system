@@ -1,8 +1,13 @@
 import axios from "axios";
 
+// API URL - use environment variable or fallback
+// For production, this will be set in Vercel environment variables
 const API_BASE_URL =
-  // import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-  import.meta.env.VITE_API_URL || "https://railway-ticket-reservation-system-b.vercel.app/api";
+  import.meta.env.PUBLIC_API_URL ||
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV
+    ? "http://localhost:5000/api"
+    : "https://railway-ticket-reservation-system-b.vercel.app/api");
 
 const api = axios.create({
   baseURL: API_BASE_URL,
