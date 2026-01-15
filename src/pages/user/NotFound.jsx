@@ -60,7 +60,7 @@ const NotFound = () => {
               className="flex items-center justify-center space-x-2 bg-white/20 backdrop-blur-lg text-white font-semibold py-3.5 px-8 rounded-xl hover:bg-white/30 hover:scale-105 transition-all duration-200 border-2 border-white/30"
             >
               <Search className="w-5 h-5" />
-              <span>Search Buses</span>
+              <span>Search Trains</span>
             </Link>
             <button
               onClick={() => window.history.back()}

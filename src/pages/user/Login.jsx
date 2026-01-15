@@ -42,7 +42,13 @@ const Login = () => {
       const { token, user } = response.data;
 
       login(user, token);
-      navigate("/");
+      
+      // Redirect based on user role
+      if (user.role === "admin") {
+        navigate("/admin/dashboard");
+      } else {
+        navigate("/");
+      }
     } catch (error) {
       setError(error.response?.data?.message || "Login failed");
     } finally {

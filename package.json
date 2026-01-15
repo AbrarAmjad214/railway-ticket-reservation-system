@@ -11,12 +11,15 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.11.0",
+    "@stripe/stripe-js": "^8.6.0",
     "axios": "^1.6.0",
     "lucide-react": "^0.294.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-modal": "^3.16.3",
     "react-redux": "^9.2.0",
-    "react-router-dom": "^6.20.0"
+    "react-router-dom": "^6.20.0",
+    "react-toastify": "^11.0.5"
   },
   "devDependencies": {
     "@types/react": "^18.2.37",

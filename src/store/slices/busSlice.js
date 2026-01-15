@@ -10,7 +10,7 @@ export const searchBuses = createAsyncThunk(
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || "Failed to search buses"
+        error.response?.data?.message || "Failed to search Train"
       );
     }
   }
@@ -88,7 +88,6 @@ const busSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Search Buses
       .addCase(searchBuses.pending, (state) => {
         state.loading = true;
         state.error = null;

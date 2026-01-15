@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { User, Phone, Mail, CreditCard, Plus, X } from "lucide-react";
+import { User, Phone, Mail } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { Footer } from "../../components/layout";
 
@@ -8,10 +8,28 @@ const PassengerInfo = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { bus, selectedSeats, from, to, date, passengers } =
+  const { bus, selectedSeats, from, to, date, passengers, schedule } =
     location.state || {};
 
+  // Debug: Log schedule data
+  useEffect(() => {
+    console.log("PassengerInfo - Schedule from location.state:", schedule);
+    console.log("PassengerInfo - Schedule _id:", schedule?._id);
+    console.log(
+      "PassengerInfo - Schedule keys:",
+      schedule ? Object.keys(schedule) : "schedule is null/undefined"
+    );
+    console.log("PassengerInfo - Full location.state:", location.state);
+  }, [schedule, location.state]);
+
   const [passengerForms, setPassengerForms] = useState([]);
+
+  // Generate a unique key for localStorage based on bus, seats, and date
+  const getStorageKey = () => {
+    if (!bus || !selectedSeats || !date) return null;
+    const seatIds = selectedSeats.map((s) => s.id).join("-");
+    return `passengerInfo_${bus.id}_${seatIds}_${date}`;
+  };
 
   useEffect(() => {
     if (!bus || !selectedSeats || selectedSeats.length === 0) {
@@ -19,7 +37,24 @@ const PassengerInfo = () => {
       return;
     }
 
-    // Initialize passenger forms
+    // Try to load saved data from localStorage
+    const storageKey = getStorageKey();
+    const savedData = storageKey ? localStorage.getItem(storageKey) : null;
+
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        // Check if saved data matches current passengers count
+        if (parsedData.length === passengers) {
+          setPassengerForms(parsedData);
+          return;
+        }
+      } catch (error) {
+        console.error("Error loading saved passenger data:", error);
+      }
+    }
+
+    // Initialize passenger forms if no saved data
     const initialForms = Array.from({ length: passengers }, (_, index) => ({
       id: index + 1,
       name: user?.name || "",
@@ -30,7 +65,17 @@ const PassengerInfo = () => {
       email: user?.email || "",
     }));
     setPassengerForms(initialForms);
-  }, [bus, selectedSeats, passengers, user, navigate]);
+  }, [bus, selectedSeats, passengers, user, navigate, date]);
+
+  // Save to localStorage whenever passengerForms changes
+  useEffect(() => {
+    if (passengerForms.length > 0) {
+      const storageKey = getStorageKey();
+      if (storageKey) {
+        localStorage.setItem(storageKey, JSON.stringify(passengerForms));
+      }
+    }
+  }, [passengerForms, bus, selectedSeats, date]);
 
   const updatePassenger = (index, field, value) => {
     const updated = [...passengerForms];
@@ -64,6 +109,22 @@ const PassengerInfo = () => {
       }
     }
 
+    // Save data before navigating
+    const storageKey = getStorageKey();
+    if (storageKey) {
+      localStorage.setItem(storageKey, JSON.stringify(passengerForms));
+    }
+
+    // Debug: Log before navigation
+    console.log(
+      "PassengerInfo - Navigating to ReviewPayment with schedule:",
+      schedule
+    );
+    console.log(
+      "PassengerInfo - Schedule _id before navigation:",
+      schedule?._id
+    );
+
     navigate("/review-payment", {
       state: {
         bus,
@@ -73,6 +134,7 @@ const PassengerInfo = () => {
         date,
         passengers,
         passengerInfo: passengerForms,
+        schedule: schedule, // Pass schedule data to ReviewPayment
       },
     });
   };
@@ -173,7 +235,7 @@ const PassengerInfo = () => {
                     CNIC / ID Number *
                   </label>
                   <input
-                    type="text"
+                    type="number"
                     placeholder="12345-1234567-1"
                     value={passenger.cnic}
                     onChange={(e) =>
@@ -188,12 +250,12 @@ const PassengerInfo = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                     <Phone className="w-4 h-4 mr-1" />
                     Phone Number *
                   </label>
                   <input
-                    type="tel"
+                    type="number"
                     placeholder="03XX-XXXXXXX"
                     value={passenger.phone}
                     onChange={(e) =>
@@ -205,7 +267,7 @@ const PassengerInfo = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                     <Mail className="w-4 h-4 mr-1" />
                     Email *
                   </label>

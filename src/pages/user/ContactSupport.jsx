@@ -90,8 +90,8 @@ const ContactSupport = () => {
                   <Mail className="w-5 h-5 text-blue-600 mr-3 mt-1" />
                   <div>
                     <p className="font-semibold text-gray-800">Email</p>
-                    <p className="text-gray-600">support@busticket.com</p>
-                    <p className="text-gray-600">info@busticket.com</p>
+                    <p className="text-gray-600">support@railwayticket.com</p>
+                    <p className="text-gray-600">info@railwayticket.com</p>
                   </div>
                 </div>
                 <div className="flex items-start">
@@ -214,21 +214,6 @@ const ContactSupport = () => {
             </div>
 
             {/* Live Chat Widget Placeholder */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                <MessageSquare className="w-5 h-5 mr-2" />
-                Live Chat
-              </h2>
-              <div className="bg-gray-50 rounded-lg p-8 text-center border-2 border-dashed border-gray-300">
-                <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-600 mb-4">
-                  Live chat widget will be integrated here
-                </p>
-                <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors">
-                  Start Chat
-                </button>
-              </div>
-            </div>
 
             {/* FAQs */}
             <div className="bg-white rounded-lg shadow-md p-6">

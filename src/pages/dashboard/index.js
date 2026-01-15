@@ -1,5 +1,6 @@
 export { default as Dashboard } from "./Dashboard";
 export { default as AdminDashboard } from "./AdminDashboard";
+export { default as Users } from "./Users";
 export { default as Trains } from "./Trains";
 export { default as Schedules } from "./Schedules";
 export { default as Bookings } from "./Bookings";

@@ -23,10 +23,12 @@ import {
   Heart,
 } from "lucide-react";
 import { Footer } from "../../components/layout";
-import { busAPI } from "../../services/api";
+import { busAPI, cityAPI } from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 
 const Home = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchForm, setSearchForm] = useState({
     from: "",
     to: "",
@@ -35,53 +37,116 @@ const Home = () => {
   });
   const [popularRoutes, setPopularRoutes] = useState([]);
   const [openFaq, setOpenFaq] = useState(null);
+  const [loadingRoutes, setLoadingRoutes] = useState(true);
+  const [routesError, setRoutesError] = useState(null);
+  const [searchError, setSearchError] = useState("");
+  const [cities, setCities] = useState([]);
+  const [loadingCities, setLoadingCities] = useState(true);
 
+  // Fetch cities from API
   useEffect(() => {
-    // Fetch popular routes
-    busAPI
-      .getPopularRoutes()
-      .then((res) => setPopularRoutes(res.data))
-      .catch(() =>
-        setPopularRoutes([
-          { from: "Karachi", to: "Lahore", price: 2500, duration: "12h 30m" },
-          {
-            from: "Islamabad",
-            to: "Karachi",
-            price: 3000,
-            duration: "14h 00m",
-          },
-          { from: "Lahore", to: "Islamabad", price: 1500, duration: "4h 30m" },
-          { from: "Karachi", to: "Quetta", price: 2000, duration: "8h 00m" },
-        ])
-      );
+    const fetchCities = async () => {
+      try {
+        setLoadingCities(true);
+        const res = await cityAPI.getAllCities();
+        if (res.data && Array.isArray(res.data)) {
+          // Extract city names from response
+          const cityNames = res.data.map((city) => city.name).sort();
+          setCities(cityNames);
+        } else {
+          setCities([]);
+        }
+      } catch (error) {
+        console.error("Error fetching cities:", error);
+        // Fallback to default cities if API fails
+        setCities([
+          "Karachi",
+          "Lahore",
+          "Islamabad",
+          "Rawalpindi",
+          "Quetta",
+          "Peshawar",
+          "Multan",
+          "Faisalabad",
+          "Sialkot",
+          "Hyderabad",
+        ]);
+      } finally {
+        setLoadingCities(false);
+      }
+    };
+
+    fetchCities();
+  }, []);
+
+  // Fetch popular routes with proper error handling
+  useEffect(() => {
+    const fetchPopularRoutes = async () => {
+      try {
+        setLoadingRoutes(true);
+        setRoutesError(null);
+        const res = await busAPI.getPopularRoutes();
+        if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+          setPopularRoutes(res.data);
+        } else {
+          setPopularRoutes([]);
+        }
+      } catch (error) {
+        console.error("Error fetching popular routes:", error);
+        setRoutesError(
+          error.response?.data?.message || "Failed to load popular routes"
+        );
+        setPopularRoutes([]);
+      } finally {
+        setLoadingRoutes(false);
+      }
+    };
+
+    fetchPopularRoutes();
   }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (searchForm.from && searchForm.to && searchForm.date) {
-      navigate("/search", {
-        state: {
-          from: searchForm.from,
-          to: searchForm.to,
-          date: searchForm.date,
-          passengers: searchForm.passengers,
-        },
-      });
-    }
-  };
+    setSearchError("");
 
-  const cities = [
-    "Karachi",
-    "Lahore",
-    "Islamabad",
-    "Rawalpindi",
-    "Quetta",
-    "Peshawar",
-    "Multan",
-    "Faisalabad",
-    "Sialkot",
-    "Hyderabad",
-  ];
+    // Validation
+    if (!searchForm.from || !searchForm.to || !searchForm.date) {
+      setSearchError("Please fill all required fields");
+      return;
+    }
+
+    if (
+      searchForm.from.trim().toLowerCase() ===
+      searchForm.to.trim().toLowerCase()
+    ) {
+      setSearchError("Departure and destination cities cannot be the same");
+      return;
+    }
+
+    const selectedDate = new Date(searchForm.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (selectedDate < today) {
+      setSearchError("Please select a valid future date");
+      return;
+    }
+
+    if (searchForm.passengers < 1 || searchForm.passengers > 10) {
+      setSearchError("Number of passengers must be between 1 and 10");
+      return;
+    }
+
+    // Navigate to search results
+    navigate("/search", {
+      state: {
+        from: searchForm.from.trim(),
+        to: searchForm.to.trim(),
+        date: searchForm.date,
+        passengers: searchForm.passengers,
+      },
+    });
+  };
 
   const toggleFaq = (index) => {
     setOpenFaq(openFaq === index ? null : index);
@@ -134,195 +199,107 @@ const Home = () => {
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center mb-8 animate-fade-in">
             <h1 className="text-5xl md:text-6xl font-bold mb-4 animate-slide-down">
-              Book Your Bus Ticket
+              Book Your Railway Ticket
             </h1>
             <p className="text-xl md:text-2xl text-purple-100 animate-slide-up">
-              Travel comfortably across Pakistan
+              Plan your journey with ease and enjoy safe, comfortable bus travel
+              across Pakistan with fast booking and trusted operators.
             </p>
           </div>
 
           <div className="max-w-4xl mx-auto animate-fade-in-up">
-            <form
-              onSubmit={handleSearch}
-              className="bg-white rounded-xl shadow-2xl p-6 md:p-8 transform hover:scale-105 transition-transform duration-300"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <MapPin className="inline w-4 h-4 mr-1" />
-                    From
-                  </label>
-                  <input
-                    type="text"
-                    list="cities-from"
-                    value={searchForm.from}
-                    onChange={(e) =>
-                      setSearchForm({ ...searchForm, from: e.target.value })
-                    }
-                    placeholder="Select city"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                    required
-                  />
-                  <datalist id="cities-from">
-                    {cities.map((city) => (
-                      <option key={city} value={city} />
-                    ))}
-                  </datalist>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <MapPin className="inline w-4 h-4 mr-1" />
-                    To
-                  </label>
-                  <input
-                    type="text"
-                    list="cities-to"
-                    value={searchForm.to}
-                    onChange={(e) =>
-                      setSearchForm({ ...searchForm, to: e.target.value })
-                    }
-                    placeholder="Select city"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                    required
-                  />
-                  <datalist id="cities-to">
-                    {cities.map((city) => (
-                      <option key={city} value={city} />
-                    ))}
-                  </datalist>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Calendar className="inline w-4 h-4 mr-1" />
-                    Date
-                  </label>
-                  <input
-                    type="date"
-                    value={searchForm.date}
-                    onChange={(e) =>
-                      setSearchForm({ ...searchForm, date: e.target.value })
-                    }
-                    min={new Date().toISOString().split("T")[0]}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Users className="inline w-4 h-4 mr-1" />
-                    Passengers
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="10"
-                    value={searchForm.passengers}
-                    onChange={(e) =>
-                      setSearchForm({
-                        ...searchForm,
-                        passengers: parseInt(e.target.value),
-                      })
-                    }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                    required
-                  />
-                </div>
+            {/* Info Text and View Schedules Button */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex-1 text-center sm:text-left">
+                <p className="text-white text-lg font-medium mb-1">
+                  Book Your Railway Ticket Now
+                </p>
+                <p className="text-purple-100 text-sm">
+                  Select your route and date to find available routes, or view
+                  all schedules to plan your journey
+                </p>
               </div>
-
               <button
-                type="submit"
-                className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                onClick={() => navigate("/all-schedules")}
+                className="px-6 py-3 bg-white text-indigo-900 font-semibold rounded-lg hover:bg-purple-50 transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center gap-2 whitespace-nowrap"
               >
-                <Search className="w-5 h-5" />
-                <span>Search Buses</span>
+                <Calendar className="w-5 h-5" />
+                <span>View All Schedules</span>
               </button>
-            </form>
+            </div>
           </div>
         </div>
       </div>
 
-              {/* About Us Section */}
-              <div className="mb-12 bg-white rounded-xl shadow-lg p-8 md:p-12">
-          <div className="text-center mb-8">
-            <h2 className="text-4xl font-bold text-gray-800 mb-4">About Us</h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-indigo-600 to-pink-600 mx-auto"></div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            <div className="space-y-4">
-              <p className="text-lg text-gray-700 leading-relaxed">
-                <strong className="text-indigo-600">BusTicketing</strong> is
-                Pakistan's leading online bus booking platform, connecting
-                travelers with reliable bus operators across the country. We are
-                committed to providing a seamless, safe, and comfortable travel
-                experience for all our customers.
-              </p>
-              <p className="text-lg text-gray-700 leading-relaxed">
-                With over{" "}
-                <strong className="text-indigo-600">
-                  50,000 satisfied customers
-                </strong>{" "}
-                and partnerships with{" "}
-                <strong className="text-indigo-600">100+ bus routes</strong>, we
-                ensure that your journey is not just a trip, but a memorable
-                experience. Our mission is to make bus travel accessible,
-                affordable, and enjoyable for everyone.
-              </p>
-              <div className="flex items-center space-x-6 mt-6">
-                <div className="flex items-center">
-                  <Target className="w-6 h-6 text-indigo-600 mr-2" />
-                  <span className="text-gray-700 font-medium">Our Mission</span>
-                </div>
-                <div className="flex items-center">
-                  <Heart className="w-6 h-6 text-pink-600 mr-2" />
-                  <span className="text-gray-700 font-medium">
-                    Customer First
-                  </span>
-                </div>
-                <div className="flex items-center">
-                  <UsersIcon className="w-6 h-6 text-purple-600 mr-2" />
-                  <span className="text-gray-700 font-medium">
-                    Trusted Service
-                  </span>
-                </div>
+      {/* About Us Section */}
+      <div className="mb-12 bg-white rounded-xl shadow-lg p-8 md:p-12">
+        <div className="text-center mb-8">
+          <h2 className="text-4xl font-bold text-gray-800 mb-4">About Us</h2>
+          <div className="w-24 h-1 bg-gradient-to-r from-indigo-600 to-pink-600 mx-auto"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+          <div className="space-y-4">
+            <p className="text-lg text-gray-700 leading-relaxed">
+              <strong className="text-indigo-600">Railway Ticketing</strong> is
+              Pakistan's leading online bus booking platform, connecting
+              travelers with reliable bus operators across the country. We are
+              committed to providing a seamless, safe, and comfortable travel
+              experience for all our customers.
+            </p>
+            <p className="text-lg text-gray-700 leading-relaxed">
+              With over{" "}
+              <strong className="text-indigo-600">
+                50,000 satisfied customers
+              </strong>{" "}
+              and partnerships with{" "}
+              <strong className="text-indigo-600">100+ bus routes</strong>, we
+              ensure that your journey is not just a trip, but a memorable
+              experience. Our mission is to make bus travel accessible,
+              affordable, and enjoyable for everyone.
+            </p>
+            <div className="flex items-center space-x-6 mt-6">
+              <div className="flex items-center">
+                <Target className="w-6 h-6 text-indigo-600 mr-2" />
+                <span className="text-gray-700 font-medium">Our Mission</span>
+              </div>
+              <div className="flex items-center">
+                <Heart className="w-6 h-6 text-pink-600 mr-2" />
+                <span className="text-gray-700 font-medium">
+                  Customer First
+                </span>
+              </div>
+              <div className="flex items-center">
+                <UsersIcon className="w-6 h-6 text-purple-600 mr-2" />
+                <span className="text-gray-700 font-medium">
+                  Trusted Service
+                </span>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gradient-to-br from-indigo-100 to-purple-100 rounded-lg p-6 text-center transform hover:scale-110 transition-transform duration-300">
-                <CheckCircle className="w-12 h-12 text-indigo-600 mx-auto mb-3" />
-                <h3 className="font-semibold text-gray-800 mb-2">
-                  Safe Travel
-                </h3>
-                <p className="text-sm text-gray-600">
-                  Certified & insured buses
-                </p>
-              </div>
-              <div className="bg-gradient-to-br from-pink-100 to-purple-100 rounded-lg p-6 text-center transform hover:scale-110 transition-transform duration-300">
-                <Award className="w-12 h-12 text-pink-600 mx-auto mb-3" />
-                <h3 className="font-semibold text-gray-800 mb-2">
-                  Best Prices
-                </h3>
-                <p className="text-sm text-gray-600">Competitive rates</p>
-              </div>
-              <div className="bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg p-6 text-center transform hover:scale-110 transition-transform duration-300">
-                <Headphones className="w-12 h-12 text-blue-600 mx-auto mb-3" />
-                <h3 className="font-semibold text-gray-800 mb-2">
-                  24/7 Support
-                </h3>
-                <p className="text-sm text-gray-600">Always here to help</p>
-              </div>
-              <div className="bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg p-6 text-center transform hover:scale-110 transition-transform duration-300">
-                <Wifi className="w-12 h-12 text-purple-600 mx-auto mb-3" />
-                <h3 className="font-semibold text-gray-800 mb-2">
-                  Modern Fleet
-                </h3>
-                <p className="text-sm text-gray-600">Latest amenities</p>
-              </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-gradient-to-br from-indigo-100 to-purple-100 rounded-lg p-6 text-center transform hover:scale-110 transition-transform duration-300">
+              <CheckCircle className="w-12 h-12 text-indigo-600 mx-auto mb-3" />
+              <h3 className="font-semibold text-gray-800 mb-2">Safe Travel</h3>
+              <p className="text-sm text-gray-600">Certified & insured buses</p>
+            </div>
+            <div className="bg-gradient-to-br from-pink-100 to-purple-100 rounded-lg p-6 text-center transform hover:scale-110 transition-transform duration-300">
+              <Award className="w-12 h-12 text-pink-600 mx-auto mb-3" />
+              <h3 className="font-semibold text-gray-800 mb-2">Best Prices</h3>
+              <p className="text-sm text-gray-600">Competitive rates</p>
+            </div>
+            <div className="bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg p-6 text-center transform hover:scale-110 transition-transform duration-300">
+              <Headphones className="w-12 h-12 text-blue-600 mx-auto mb-3" />
+              <h3 className="font-semibold text-gray-800 mb-2">24/7 Support</h3>
+              <p className="text-sm text-gray-600">Always here to help</p>
+            </div>
+            <div className="bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg p-6 text-center transform hover:scale-110 transition-transform duration-300">
+              <Wifi className="w-12 h-12 text-purple-600 mx-auto mb-3" />
+              <h3 className="font-semibold text-gray-800 mb-2">Modern Fleet</h3>
+              <p className="text-sm text-gray-600">Latest amenities</p>
             </div>
           </div>
         </div>
+      </div>
 
       {/* Quick Actions */}
       <div className="container mx-auto px-4 py-8">
@@ -350,134 +327,26 @@ const Home = () => {
           </button>
 
           <button
-            onClick={() => navigate("/login")}
+            onClick={() => {
+              if (user) {
+                // Show toast/alert if already logged in
+                alert("You are already logged in!");
+              } else {
+                navigate("/login");
+              }
+            }}
             className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg hover:scale-105 transition-all duration-300 text-left animate-fade-in animation-delay-400"
           >
             <User className="w-8 h-8 text-blue-600 mb-3" />
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">Login</h3>
-            <p className="text-gray-600">Sign in to your account</p>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">
+              {user ? "Already Logged In" : "Login"}
+            </h3>
+            <p className="text-gray-600">
+              {user
+                ? `Welcome, ${user.name || user.email || "User"}!`
+                : "Sign in to your account"}
+            </p>
           </button>
-        </div>
-
-        {/* Popular Routes */}
-        <div className="mb-12">
-          <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-            Popular Routes
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {popularRoutes.map((route, index) => (
-              <div
-                key={index}
-                className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer animate-fade-in-up"
-                style={{ animationDelay: `${index * 100}ms` }}
-                onClick={() => {
-                  setSearchForm({
-                    from: route.from,
-                    to: route.to,
-                    date: new Date().toISOString().split("T")[0],
-                    passengers: 1,
-                  });
-                }}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <p className="font-semibold text-gray-800">{route.from}</p>
-                    <p className="text-sm text-gray-600">to</p>
-                    <p className="font-semibold text-gray-800">{route.to}</p>
-                  </div>
-                  <Bus className="w-8 h-8 text-blue-600" />
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center text-gray-600">
-                    <Clock className="w-4 h-4 mr-1" />
-                    {route.duration}
-                  </div>
-                  <div className="text-blue-600 font-semibold">
-                    Rs. {route.price}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Promotional Banners */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-          <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg p-8 text-white">
-            <h3 className="text-2xl font-bold mb-2">Special Offer!</h3>
-            <p className="text-lg mb-4">Get 20% off on your first booking</p>
-            <button className="bg-white text-purple-600 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
-              Book Now
-            </button>
-          </div>
-
-          <div className="bg-gradient-to-r from-green-600 to-teal-600 rounded-lg p-8 text-white">
-            <h3 className="text-2xl font-bold mb-2">Student Discount</h3>
-            <p className="text-lg mb-4">Students get 15% off on all routes</p>
-            <button className="bg-white text-green-600 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
-              Learn More
-            </button>
-          </div>
-        </div>
-
-        {/* Features Section */}
-        <div className="mb-12">
-          <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-            Why Choose Us?
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white rounded-lg shadow-md p-6 text-center hover:shadow-xl hover:scale-105 transition-all duration-300 animate-fade-in-up">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4 transform hover:rotate-12 transition-transform duration-300">
-                <Shield className="w-8 h-8 text-indigo-600" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                Safe & Secure
-              </h3>
-              <p className="text-gray-600">
-                Your safety is our priority. All buses are regularly maintained
-                and certified.
-              </p>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-md p-6 text-center hover:shadow-xl hover:scale-105 transition-all duration-300 animate-fade-in-up animation-delay-200">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-4 transform hover:rotate-12 transition-transform duration-300">
-                <Wifi className="w-8 h-8 text-purple-600" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                Modern Amenities
-              </h3>
-              <p className="text-gray-600">
-                Enjoy WiFi, AC, charging ports, and comfortable seating on all
-                buses.
-              </p>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-md p-6 text-center hover:shadow-xl hover:scale-105 transition-all duration-300 animate-fade-in-up animation-delay-400">
-              <div className="w-16 h-16 bg-gradient-to-br from-pink-100 to-red-100 rounded-full flex items-center justify-center mx-auto mb-4 transform hover:rotate-12 transition-transform duration-300">
-                <Headphones className="w-8 h-8 text-pink-600" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                24/7 Support
-              </h3>
-              <p className="text-gray-600">
-                Our customer support team is available round the clock to assist
-                you.
-              </p>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-md p-6 text-center hover:shadow-xl hover:scale-105 transition-all duration-300 animate-fade-in-up animation-delay-600">
-              <div className="w-16 h-16 bg-gradient-to-br from-yellow-100 to-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 transform hover:rotate-12 transition-transform duration-300">
-                <Award className="w-8 h-8 text-orange-600" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                Best Prices
-              </h3>
-              <p className="text-gray-600">
-                Competitive prices with special discounts and offers for
-                students.
-              </p>
-            </div>
-          </div>
         </div>
 
         {/* How It Works */}
@@ -637,8 +506,6 @@ const Home = () => {
             </div>
           </div>
         </div>
-
-
 
         {/* FAQ Section */}
         <div className="mb-12">

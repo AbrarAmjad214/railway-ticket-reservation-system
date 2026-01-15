@@ -15,5 +15,8 @@ export const bookingAPI = {
   getUserBookings: () => api.get("/booking/user"),
   cancelBooking: (id) => api.post(`/booking/cancel/${id}`),
   getAllBookings: () => api.get("/booking/admin/all"),
+  getBookedSeats: (scheduleId) =>
+    api.get(`/booking/booked-seats/${scheduleId}`),
+  downloadTicket: (id) =>
+    api.get(`/booking/download/${id}`, { responseType: "blob" }),
 };
-

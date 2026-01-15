@@ -63,14 +63,7 @@ const Footer = () => {
                   My Bookings
                 </Link>
               </li>
-              <li>
-                <Link
-                  to="/track-bus"
-                  className="hover:text-blue-400 transition-colors"
-                >
-                  Track Bus
-                </Link>
-              </li>
+              
               <li>
                 <Link
                   to="/contact"

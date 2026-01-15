@@ -48,7 +48,7 @@ const Navbar = () => {
                     className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition-colors"
                   >
                     <Search size={18} />
-                    <span>Search Buses</span>
+                    <span>Search Train</span>
                   </Link>
                   <Link
                     to="/my-bookings"
@@ -57,13 +57,7 @@ const Navbar = () => {
                     <Ticket size={18} />
                     <span>My Bookings</span>
                   </Link>
-                  <Link
-                    to="/track-bus"
-                    className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition-colors"
-                  >
-                    <QrCode size={18} />
-                    <span>Track Bus</span>
-                  </Link>
+                  
                   <Link
                     to="/contact"
                     className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition-colors"

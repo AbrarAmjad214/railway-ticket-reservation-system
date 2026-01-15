@@ -1,64 +1,77 @@
-import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { scheduleAPI, bookingAPI } from '../services/api'
-import { Train, Calendar, Clock, MapPin, User, Users, CreditCard, AlertCircle } from 'lucide-react'
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { scheduleAPI, bookingAPI } from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
+import {
+  Train,
+  Calendar,
+  Clock,
+  MapPin,
+  User,
+  Users,
+  CreditCard,
+  AlertCircle,
+} from "lucide-react";
 
-const BookingForm = ({ user }) => {
-  const { scheduleId } = useParams()
-  const navigate = useNavigate()
-  const [schedule, setSchedule] = useState(null)
-  const [availableSeats, setAvailableSeats] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [bookingLoading, setBookingLoading] = useState(false)
-  const [error, setError] = useState('')
+const BookingForm = () => {
+  const { user } = useAuth();
+  const { scheduleId } = useParams();
+  const navigate = useNavigate();
+  const [schedule, setSchedule] = useState(null);
+  const [availableSeats, setAvailableSeats] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
-    passengerName: user?.name || '',
-    passengerAge: '',
-    seatNumber: '',
-  })
+    passengerName: user?.name || "",
+    passengerAge: "",
+    seatNumber: "",
+  });
 
   useEffect(() => {
-    fetchScheduleDetails()
-  }, [scheduleId])
+    fetchScheduleDetails();
+  }, [scheduleId]);
 
   const fetchScheduleDetails = async () => {
     try {
-      const scheduleResponse = await scheduleAPI.getAllSchedules()
-      const foundSchedule = scheduleResponse.data.schedules.find(s => s._id === scheduleId)
+      const scheduleResponse = await scheduleAPI.getAllSchedules();
+      const foundSchedule = scheduleResponse.data.schedules.find(
+        (s) => s._id === scheduleId
+      );
 
       if (!foundSchedule) {
-        setError('Schedule not found')
-        return
+        setError("Schedule not found");
+        return;
       }
 
-      setSchedule(foundSchedule)
+      setSchedule(foundSchedule);
 
       // Generate available seats (simplified - in real app, you'd get this from backend)
-      const seats = []
+      const seats = [];
       for (let i = 1; i <= foundSchedule.availableSeats; i++) {
-        seats.push(i)
+        seats.push(i);
       }
-      setAvailableSeats(seats)
+      setAvailableSeats(seats);
     } catch (error) {
-      console.error('Error fetching schedule:', error)
-      setError('Failed to load schedule details')
+      console.error("Error fetching schedule:", error);
+      setError("Failed to load schedule details");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
-    })
-  }
+    });
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    setBookingLoading(true)
+    e.preventDefault();
+    setError("");
+    setBookingLoading(true);
 
     try {
       const bookingData = {
@@ -67,23 +80,25 @@ const BookingForm = ({ user }) => {
         seatNumber: parseInt(formData.seatNumber),
         passengerName: formData.passengerName,
         passengerAge: parseInt(formData.passengerAge),
-      }
+      };
 
-      await bookingAPI.createBooking(bookingData)
-      navigate('/bookings', { state: { message: 'Booking created successfully!' } })
+      await bookingAPI.createBooking(bookingData);
+      navigate("/admin/bookings", {
+        state: { message: "Booking created successfully!" },
+      });
     } catch (error) {
-      setError(error.response?.data?.message || 'Failed to create booking')
+      setError(error.response?.data?.message || "Failed to create booking");
     } finally {
-      setBookingLoading(false)
+      setBookingLoading(false);
     }
-  }
+  };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
       </div>
-    )
+    );
   }
 
   if (error && !schedule) {
@@ -93,17 +108,19 @@ const BookingForm = ({ user }) => {
         <h3 className="text-lg font-medium text-gray-900 mb-2">Error</h3>
         <p className="text-gray-600">{error}</p>
       </div>
-    )
+    );
   }
 
   if (schedule.availableSeats === 0) {
     return (
       <div className="text-center py-12">
         <AlertCircle className="h-16 w-16 text-red-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No Seats Available</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">
+          No Seats Available
+        </h3>
         <p className="text-gray-600">This train is fully booked.</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -117,13 +134,19 @@ const BookingForm = ({ user }) => {
 
       {/* Schedule Details */}
       <div className="card">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Schedule Details</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Schedule Details
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex items-center space-x-3">
             <Train className="h-5 w-5 text-primary-600" />
             <div>
-              <p className="font-medium text-gray-900">{schedule.train?.trainName}</p>
-              <p className="text-sm text-gray-600">{schedule.train?.trainNumber}</p>
+              <p className="font-medium text-gray-900">
+                {schedule.train?.trainName}
+              </p>
+              <p className="text-sm text-gray-600">
+                {schedule.train?.trainNumber}
+              </p>
             </div>
           </div>
 
@@ -157,15 +180,21 @@ const BookingForm = ({ user }) => {
 
         <div className="mt-4 p-4 bg-primary-50 rounded-lg">
           <div className="flex justify-between items-center">
-            <span className="text-lg font-semibold text-primary-900">Total Price</span>
-            <span className="text-2xl font-bold text-primary-600">Rs. {schedule.ticketPrice}</span>
+            <span className="text-lg font-semibold text-primary-900">
+              Total Price
+            </span>
+            <span className="text-2xl font-bold text-primary-600">
+              Rs. {schedule.ticketPrice}
+            </span>
           </div>
         </div>
       </div>
 
       {/* Booking Form */}
       <div className="card">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Passenger Information</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Passenger Information
+        </h3>
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4 flex items-center space-x-2">
@@ -241,7 +270,7 @@ const BookingForm = ({ user }) => {
           <div className="flex space-x-4">
             <button
               type="button"
-              onClick={() => navigate('/schedules')}
+              onClick={() => navigate("/admin/schedules")}
               className="flex-1 btn btn-secondary"
             >
               Cancel
@@ -251,13 +280,13 @@ const BookingForm = ({ user }) => {
               disabled={bookingLoading}
               className="flex-1 btn btn-primary disabled:opacity-50 disabled:cursor-not-allow"
             >
-              {bookingLoading ? 'Processing...' : 'Confirm Booking'}
+              {bookingLoading ? "Processing..." : "Confirm Booking"}
             </button>
           </div>
         </form>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default BookingForm
+export default BookingForm;

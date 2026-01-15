@@ -8,14 +8,24 @@ import {
   QrCode,
   Ticket,
 } from "lucide-react";
-import { busBookingAPI } from "../../services/api";
+import { bookingAPI } from "../../services/api";
 import { Footer } from "../../components/layout";
 
 const BookingConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { booking, bus, selectedSeats, from, to, date, passengerInfo } =
-    location.state || {};
+  const stateData = location.state || {};
+
+  // Handle nested booking object structure
+  // Backend returns { message, booking }, so we need to extract the actual booking
+  // Check if booking is nested: { booking: {...}, message: "..." }
+  let booking = stateData.booking;
+  if (booking && booking.booking) {
+    // If booking has a nested 'booking' property, use that
+    booking = booking.booking;
+  }
+
+  const { bus, selectedSeats, from, to, date, passengerInfo } = stateData;
 
   const [qrCode, setQrCode] = useState("");
   const [emailSent, setEmailSent] = useState(false);
@@ -27,13 +37,41 @@ const BookingConfirmation = () => {
       return;
     }
 
+    // Debug: Log booking object
+    console.log("BookingConfirmation - Full location.state:", location.state);
+    console.log("BookingConfirmation - stateData.booking:", stateData.booking);
+    console.log("BookingConfirmation - Extracted booking:", booking);
+    console.log("BookingConfirmation - Booking _id:", booking?._id);
+    console.log("BookingConfirmation - Booking id:", booking?.id);
+    console.log(
+      "BookingConfirmation - Booking keys:",
+      booking ? Object.keys(booking) : []
+    );
+
+    // Check if booking is nested
+    if (stateData.booking?.booking) {
+      console.log("BookingConfirmation - Found nested booking object");
+      console.log(
+        "BookingConfirmation - Nested booking _id:",
+        stateData.booking.booking._id
+      );
+    }
+
     // Generate QR code (in real app, this would come from backend)
-    generateQRCode(booking.bookingId || booking.id);
+    const bookingIdForQR = booking._id || booking.id || booking.bookingId;
+    generateQRCode(bookingIdForQR);
 
     // Simulate email and SMS sending
     setTimeout(() => setEmailSent(true), 1000);
     setTimeout(() => setSmsSent(true), 2000);
-  }, [booking, navigate]);
+
+    // Clear saved passenger info from localStorage after successful booking
+    if (bus && selectedSeats && date) {
+      const seatIds = selectedSeats.map((s) => s.id).join("-");
+      const storageKey = `passengerInfo_${bus.id}_${seatIds}_${date}`;
+      localStorage.removeItem(storageKey);
+    }
+  }, [booking, navigate, bus, selectedSeats, date]);
 
   const generateQRCode = (bookingId) => {
     // Simple QR code generation (in production, use a library like qrcode.react)
@@ -43,22 +81,59 @@ const BookingConfirmation = () => {
 
   const handleDownloadPDF = async () => {
     try {
-      if (booking.id) {
-        const response = await busBookingAPI.downloadTicket(booking.id);
-        const blob = new Blob([response.data], { type: "application/pdf" });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `ticket-${booking.bookingId || booking.id}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } else {
-        alert("Download feature will be available after booking confirmation");
+      console.log("Full location.state:", location.state);
+      console.log("Booking object:", booking);
+      console.log(
+        "Booking keys:",
+        booking ? Object.keys(booking) : "booking is null"
+      );
+
+      // Handle nested booking structure
+      // If booking has a 'booking' property, use that
+      const actualBooking = booking?.booking || booking;
+
+      // Try multiple ways to get booking ID
+      const bookingId =
+        actualBooking?._id ||
+        actualBooking?.id ||
+        actualBooking?.bookingId ||
+        booking?._id ||
+        booking?.id ||
+        booking?.bookingId ||
+        null;
+
+      console.log("Actual booking:", actualBooking);
+      console.log("Extracted booking ID:", bookingId);
+
+      if (!bookingId) {
+        console.error("Booking ID not found in booking object:", booking);
+        alert("Booking ID not found. Please try again or contact support.");
+        return;
       }
+
+      // Convert to string if it's an object
+      const bookingIdString = bookingId.toString
+        ? bookingId.toString()
+        : String(bookingId);
+      console.log("Booking ID string:", bookingIdString);
+
+      const response = await bookingAPI.downloadTicket(bookingIdString);
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `ticket-${bookingIdString.slice(-8)}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url); // Clean up
     } catch (error) {
       console.error("Download failed:", error);
-      alert("Download failed. Please try again later.");
+      console.error("Error response:", error.response);
+      alert(
+        error.response?.data?.message ||
+          "Download failed. Please try again later."
+      );
     }
   };
 
@@ -66,7 +141,9 @@ const BookingConfirmation = () => {
     return null;
   }
 
-  const bookingId = booking.bookingId || booking.id || "BOOK-" + Date.now();
+  // Get booking ID for display
+  const bookingId =
+    booking._id || booking.id || booking.bookingId || "BOOK-" + Date.now();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-8">
@@ -93,7 +170,7 @@ const BookingConfirmation = () => {
         </div>
 
         {/* QR Code */}
-        <div className="bg-white rounded-lg shadow-lg p-8 mb-6 text-center">
+        {/* <div className="bg-white rounded-lg shadow-lg p-8 mb-6 text-center">
           <QrCode className="w-8 h-8 text-gray-600 mx-auto mb-4" />
           <div className="bg-gray-100 p-8 rounded-lg inline-block mb-4">
             <div className="w-48 h-48 bg-white border-4 border-gray-300 rounded-lg flex items-center justify-center">
@@ -104,7 +181,7 @@ const BookingConfirmation = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Trip Details */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
@@ -197,7 +274,7 @@ const BookingConfirmation = () => {
                 <span className="text-gray-400">Sending...</span>
               )}
             </div>
-            <div className="flex items-center justify-between">
+            {/* <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <MessageSquare
                   className={`w-5 h-5 mr-3 ${
@@ -211,7 +288,7 @@ const BookingConfirmation = () => {
               ) : (
                 <span className="text-gray-400">Sending...</span>
               )}
-            </div>
+            </div> */}
           </div>
         </div>
 

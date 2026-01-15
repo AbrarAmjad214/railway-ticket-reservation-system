@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { trainAPI, scheduleAPI, bookingAPI } from '../services/api'
+import { trainAPI, scheduleAPI, bookingAPI } from '../../services/api'
 import { Train, Calendar, BookOpen, MapPin, Clock, Users, TrendingUp } from 'lucide-react'
 
 const Dashboard = ({ user }) => {

@@ -1,6 +1,16 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Clock, Bus, Wifi, Snowflake, Plug, Filter, X } from "lucide-react";
+import {
+  Clock,
+  Bus,
+  Wifi,
+  Snowflake,
+  Plug,
+  Filter,
+  X,
+  AlertCircle,
+  RefreshCw,
+} from "lucide-react";
 import { busAPI } from "../../services/api";
 import { Footer } from "../../components/layout";
 
@@ -12,6 +22,8 @@ const SearchResults = () => {
   const [buses, setBuses] = useState([]);
   const [filteredBuses, setFilteredBuses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isNoBusesAvailable, setIsNoBusesAvailable] = useState(false);
   const [filters, setFilters] = useState({
     departureTime: "",
     busType: "",
@@ -19,101 +31,63 @@ const SearchResults = () => {
     maxPrice: "",
   });
 
-  useEffect(() => {
+  // Fetch buses with proper error handling
+  const fetchBuses = async () => {
     if (!from || !to || !date) {
       navigate("/");
       return;
     }
 
-    // Fetch buses
-    busAPI
-      .searchBuses({ from, to, date })
-      .then((res) => {
-        const busData = res.data || [];
+    try {
+      setLoading(true);
+      setError(null);
+      setIsNoBusesAvailable(false);
+
+      const res = await busAPI.searchBuses({ from, to, date });
+
+      const busData = res.data || [];
+
+      if (!Array.isArray(busData)) {
+        throw new Error("Invalid response format from server");
+      }
+
+      // Check if buses array is empty
+      if (busData.length === 0) {
+        setIsNoBusesAvailable(true);
+        setBuses([]);
+        setFilteredBuses([]);
+      } else {
         setBuses(busData);
         setFilteredBuses(busData);
-        setLoading(false);
-      })
-      .catch(() => {
-        // Mock data for demo
-        setBuses([
-          {
-            id: 1,
-            operator: "Daewoo Express",
-            operatorLogo: "🚌",
-            departureTime: "08:00",
-            arrivalTime: "20:30",
-            duration: "12h 30m",
-            seatType: "AC",
-            price: 2500,
-            amenities: ["wifi", "ac", "charging"],
-            busType: "Luxury",
-          },
-          {
-            id: 2,
-            operator: "Faisal Movers",
-            operatorLogo: "🚌",
-            departureTime: "10:00",
-            arrivalTime: "22:00",
-            duration: "12h 00m",
-            seatType: "Economy",
-            price: 2000,
-            amenities: ["wifi", "ac"],
-            busType: "Standard",
-          },
-          {
-            id: 3,
-            operator: "Niazi Express",
-            operatorLogo: "🚌",
-            departureTime: "14:00",
-            arrivalTime: "02:30",
-            duration: "12h 30m",
-            seatType: "Business",
-            price: 3500,
-            amenities: ["wifi", "ac", "charging", "recliner"],
-            busType: "Luxury",
-          },
-        ]);
-        setFilteredBuses([
-          {
-            id: 1,
-            operator: "Daewoo Express",
-            operatorLogo: "🚌",
-            departureTime: "08:00",
-            arrivalTime: "20:30",
-            duration: "12h 30m",
-            seatType: "AC",
-            price: 2500,
-            amenities: ["wifi", "ac", "charging"],
-            busType: "Luxury",
-          },
-          {
-            id: 2,
-            operator: "Faisal Movers",
-            operatorLogo: "🚌",
-            departureTime: "10:00",
-            arrivalTime: "22:00",
-            duration: "12h 00m",
-            seatType: "Economy",
-            price: 2000,
-            amenities: ["wifi", "ac"],
-            busType: "Standard",
-          },
-          {
-            id: 3,
-            operator: "Niazi Express",
-            operatorLogo: "🚌",
-            departureTime: "14:00",
-            arrivalTime: "02:30",
-            duration: "12h 30m",
-            seatType: "Business",
-            price: 3500,
-            amenities: ["wifi", "ac", "charging", "recliner"],
-            busType: "Luxury",
-          },
-        ]);
-        setLoading(false);
-      });
+        setIsNoBusesAvailable(false);
+      }
+    } catch (err) {
+      console.error("Error fetching buses:", err);
+
+      // Handle 404 error - No buses available
+      if (err.response?.status === 404) {
+        setIsNoBusesAvailable(true);
+        setError(null);
+        setBuses([]);
+        setFilteredBuses([]);
+      } else {
+        // Handle other errors (network, 500, etc.)
+        const errorMessage =
+          err.response?.data?.message ||
+          err.message ||
+          "Failed to fetch buses. Please try again later.";
+        setError(errorMessage);
+        setIsNoBusesAvailable(false);
+        setBuses([]);
+        setFilteredBuses([]);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBuses();
   }, [from, to, date, navigate]);
 
   useEffect(() => {
@@ -150,15 +124,24 @@ const SearchResults = () => {
   }, [filters, buses]);
 
   const handleSelectSeats = (busId) => {
+    if (!busId) {
+      alert("Invalid bus selection. Please try again.");
+      return;
+    }
     navigate(`/bus/${busId}`, {
       state: { from, to, date, passengers },
     });
   };
 
+  const handleRetry = () => {
+    fetchBuses();
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mb-4"></div>
+        <p className="text-gray-600">Searching for buses...</p>
       </div>
     );
   }
@@ -171,10 +154,79 @@ const SearchResults = () => {
             Search Results
           </h1>
           <p className="text-gray-600">
-            {from} → {to} | {new Date(date).toLocaleDateString()} | {passengers}{" "}
-            {passengers === 1 ? "passenger" : "passengers"}
+            {from} → {to} | {date ? new Date(date).toLocaleDateString() : "N/A"}{" "}
+            | {passengers || 1} {passengers === 1 ? "passenger" : "passengers"}
           </p>
         </div>
+
+        {/* Error Message - Only show for actual errors, not for no buses available */}
+        {error && !isNoBusesAvailable && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-start">
+              <AlertCircle className="w-5 h-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <h3 className="text-red-800 font-semibold mb-1">
+                  Error Loading Buses
+                </h3>
+                <p className="text-red-600 text-sm mb-3">{error}</p>
+                <button
+                  onClick={handleRetry}
+                  className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Try Again
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* No Buses Available Message */}
+        {isNoBusesAvailable && !loading && (
+          <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <div className="flex items-start">
+              <Bus className="w-6 h-6 text-blue-600 mr-3 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <h3 className="text-blue-800 font-semibold mb-2 text-lg">
+                  No Buses Available
+                </h3>
+                <p className="text-blue-700 mb-4">
+                  Sorry, there are no buses available for the route{" "}
+                  <span className="font-semibold">
+                    {from} → {to}
+                  </span>{" "}
+                  on{" "}
+                  <span className="font-semibold">
+                    {date
+                      ? new Date(date).toLocaleDateString("en-US", {
+                          weekday: "long",
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })
+                      : "selected date"}
+                  </span>
+                  .
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={() => navigate("/")}
+                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
+                  >
+                    Search Different Route
+                  </button>
+                  <button
+                    onClick={handleRetry}
+                    className="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-semibold transition-colors flex items-center gap-2"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    Refresh
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Filters Sidebar */}
@@ -271,35 +323,93 @@ const SearchResults = () => {
 
           {/* Bus Listings */}
           <div className="lg:col-span-3">
-            {filteredBuses.length === 0 ? (
+            {error && !isNoBusesAvailable ? (
+              <div className="bg-white rounded-lg shadow-md p-12 text-center">
+                <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                  Unable to Load Buses
+                </h3>
+                <p className="text-gray-600 mb-4">{error}</p>
+                <button
+                  onClick={handleRetry}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
+                >
+                  <RefreshCw className="w-5 h-5" />
+                  Retry Search
+                </button>
+              </div>
+            ) : isNoBusesAvailable || filteredBuses.length === 0 ? (
               <div className="bg-white rounded-lg shadow-md p-12 text-center">
                 <Bus className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                  No buses found
+                  {isNoBusesAvailable ? "No Buses Available" : "No buses found"}
                 </h3>
-                <p className="text-gray-600">
-                  Try adjusting your filters or search again
+                <p className="text-gray-600 mb-4">
+                  {isNoBusesAvailable
+                    ? `No buses are available for the route ${from} → ${to} on ${
+                        date
+                          ? new Date(date).toLocaleDateString()
+                          : "selected date"
+                      }. Please try a different date or route.`
+                    : buses.length === 0
+                    ? "No buses are available for this route on the selected date. Please try a different date or route."
+                    : "No buses match your current filters. Try adjusting your filters or search again."}
                 </p>
+                <div className="flex flex-wrap justify-center gap-3">
+                  {buses.length > 0 && !isNoBusesAvailable && (
+                    <button
+                      onClick={() =>
+                        setFilters({
+                          departureTime: "",
+                          busType: "",
+                          minPrice: "",
+                          maxPrice: "",
+                        })
+                      }
+                      className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
+                    >
+                      Clear Filters
+                    </button>
+                  )}
+                  <button
+                    onClick={() => navigate("/")}
+                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
+                  >
+                    Search Different Route
+                  </button>
+                  {!isNoBusesAvailable && (
+                    <button
+                      onClick={handleRetry}
+                      className="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-semibold transition-colors flex items-center gap-2 mx-auto"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      Refresh
+                    </button>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
                 {filteredBuses.map((bus) => (
                   <div
-                    key={bus.id}
+                    key={bus.id || bus._id}
                     className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
                   >
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                       <div className="flex-1">
                         <div className="flex items-center mb-4">
                           <span className="text-3xl mr-3">
-                            {bus.operatorLogo}
+                            {bus.operatorLogo || "🚌"}
                           </span>
                           <div>
                             <h3 className="text-xl font-semibold text-gray-800">
-                              {bus.operator}
+                              {bus.operator ||
+                                bus.operatorName ||
+                                "Unknown Operator"}
                             </h3>
                             <p className="text-sm text-gray-600">
-                              {bus.busType} • {bus.seatType}
+                              {bus.busType || "Standard"} •{" "}
+                              {bus.seatType || "Regular"}
                             </p>
                           </div>
                         </div>
@@ -308,56 +418,61 @@ const SearchResults = () => {
                           <div>
                             <p className="text-sm text-gray-600">Departure</p>
                             <p className="text-lg font-semibold text-gray-800">
-                              {bus.departureTime}
+                              {bus.departureTime || "N/A"}
                             </p>
                           </div>
                           <div>
                             <p className="text-sm text-gray-600">Arrival</p>
                             <p className="text-lg font-semibold text-gray-800">
-                              {bus.arrivalTime}
+                              {bus.arrivalTime || "N/A"}
                             </p>
                           </div>
                           <div>
                             <p className="text-sm text-gray-600">Duration</p>
                             <p className="text-lg font-semibold text-gray-800 flex items-center">
                               <Clock className="w-4 h-4 mr-1" />
-                              {bus.duration}
+                              {bus.duration || "N/A"}
                             </p>
                           </div>
                           <div>
                             <p className="text-sm text-gray-600">Price</p>
                             <p className="text-lg font-semibold text-blue-600">
-                              Rs. {bus.price}
+                              Rs. {bus.price || bus.ticketPrice || "N/A"}
                             </p>
                           </div>
                         </div>
 
                         <div className="flex items-center space-x-4">
-                          {bus.amenities.includes("wifi") && (
-                            <div className="flex items-center text-gray-600">
-                              <Wifi className="w-4 h-4 mr-1" />
-                              <span className="text-sm">WiFi</span>
-                            </div>
-                          )}
-                          {bus.amenities.includes("ac") && (
-                            <div className="flex items-center text-gray-600">
-                              <Snowflake className="w-4 h-4 mr-1" />
-                              <span className="text-sm">AC</span>
-                            </div>
-                          )}
-                          {bus.amenities.includes("charging") && (
-                            <div className="flex items-center text-gray-600">
-                              <Plug className="w-4 h-4 mr-1" />
-                              <span className="text-sm">Charging</span>
-                            </div>
+                          {bus.amenities && Array.isArray(bus.amenities) && (
+                            <>
+                              {bus.amenities.includes("wifi") && (
+                                <div className="flex items-center text-gray-600">
+                                  <Wifi className="w-4 h-4 mr-1" />
+                                  <span className="text-sm">WiFi</span>
+                                </div>
+                              )}
+                              {bus.amenities.includes("ac") && (
+                                <div className="flex items-center text-gray-600">
+                                  <Snowflake className="w-4 h-4 mr-1" />
+                                  <span className="text-sm">AC</span>
+                                </div>
+                              )}
+                              {bus.amenities.includes("charging") && (
+                                <div className="flex items-center text-gray-600">
+                                  <Plug className="w-4 h-4 mr-1" />
+                                  <span className="text-sm">Charging</span>
+                                </div>
+                              )}
+                            </>
                           )}
                         </div>
                       </div>
 
                       <div className="mt-4 md:mt-0 md:ml-6">
                         <button
-                          onClick={() => handleSelectSeats(bus.id)}
-                          className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors"
+                          onClick={() => handleSelectSeats(bus.id || bus._id)}
+                          className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                          disabled={!bus.id && !bus._id}
                         >
                           Select Seats
                         </button>
