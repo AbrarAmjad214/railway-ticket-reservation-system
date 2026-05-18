@@ -31,7 +31,7 @@ const Navbar = () => {
               className="text-xl font-bold text-blue-600 flex items-center"
             >
               <Bus className="w-6 h-6 mr-2" />
-              BusTicketing
+              Railway Ticket
             </Link>
 
             <div className="hidden md:flex space-x-6">
