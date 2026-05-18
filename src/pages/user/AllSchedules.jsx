@@ -275,10 +275,10 @@ const AllSchedules = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            All Bus Schedules
+            All Railway Schedules
           </h1>
           <p className="text-gray-600">
-            View all available bus routes and schedules
+            View all available Railway routes and schedules
           </p>
         </div>
 
