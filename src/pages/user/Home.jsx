@@ -154,14 +154,14 @@ const Home = () => {
 
   const faqs = [
     {
-      question: "How do I book a bus ticket?",
+      question: "How do I book a train ticket?",
       answer:
-        "Simply enter your departure and destination cities, select your travel date and number of passengers, then click 'Search Buses'. Choose your preferred bus, select seats, fill in passenger details, and complete the payment.",
+        "Simply enter your departure and destination cities, select your travel date and number of passengers, then click 'Search traines'. Choose your preferred train, select seats, fill in passenger details, and complete the payment.",
     },
     {
       question: "Can I cancel my booking?",
       answer:
-        "Yes, you can cancel your booking from the 'My Bookings' page. Cancellation policies vary depending on the bus operator and time of cancellation. Refunds are processed according to the cancellation policy.",
+        "Yes, you can cancel your booking from the 'My Bookings' page. Cancellation policies vary depending on the train operator and time of cancellation. Refunds are processed according to the cancellation policy.",
     },
     {
       question: "What payment methods are accepted?",
@@ -169,14 +169,14 @@ const Home = () => {
         "We accept Credit/Debit cards, JazzCash, Easypaisa, and mobile wallet payments like Apple Pay and Google Pay. All transactions are secure and encrypted.",
     },
     {
-      question: "How do I track my bus?",
+      question: "How do I track my train?",
       answer:
-        "You can track your bus using the 'Track Bus' feature on the home page. Enter your booking ID to see real-time location updates and estimated arrival time.",
+        "You can track your train using the 'Track train' feature on the home page. Enter your booking ID to see real-time location updates and estimated arrival time.",
     },
     {
-      question: "What if I miss my bus?",
+      question: "What if I miss my train?",
       answer:
-        "If you miss your bus, please contact our support team immediately. Refund policies vary by operator and circumstances. We'll do our best to help you with alternative arrangements.",
+        "If you miss your train, please contact our support team immediately. Refund policies vary by operator and circumstances. We'll do our best to help you with alternative arrangements.",
     },
     {
       question: "Can I change my seat after booking?",
@@ -202,7 +202,7 @@ const Home = () => {
               Book Your Railway Ticket
             </h1>
             <p className="text-xl md:text-2xl text-purple-100 animate-slide-up">
-              Plan your journey with ease and enjoy safe, comfortable bus travel
+              Plan your journey with ease and enjoy safe, comfortable train travel
               across Pakistan with fast booking and trusted operators.
             </p>
           </div>
@@ -241,8 +241,8 @@ const Home = () => {
           <div className="space-y-4">
             <p className="text-lg text-gray-700 leading-relaxed">
               <strong className="text-indigo-600">Railway Ticketing</strong> is
-              Pakistan's leading online bus booking platform, connecting
-              travelers with reliable bus operators across the country. We are
+              Pakistan's leading online train booking platform, connecting
+              travelers with reliable train operators across the country. We are
               committed to providing a seamless, safe, and comfortable travel
               experience for all our customers.
             </p>
@@ -252,9 +252,9 @@ const Home = () => {
                 50,000 satisfied customers
               </strong>{" "}
               and partnerships with{" "}
-              <strong className="text-indigo-600">100+ bus routes</strong>, we
+              <strong className="text-indigo-600">100+ train routes</strong>, we
               ensure that your journey is not just a trip, but a memorable
-              experience. Our mission is to make bus travel accessible,
+              experience. Our mission is to make train travel accessible,
               affordable, and enjoyable for everyone.
             </p>
             <div className="flex items-center space-x-6 mt-6">
