@@ -321,7 +321,7 @@ const Home = () => {
           >
             <QrCode className="w-8 h-8 text-blue-600 mb-3" />
             <h3 className="text-xl font-semibold text-gray-800 mb-2">
-              Track Bus
+              Track train
             </h3>
             <p className="text-gray-600">Track your bus in real-time</p>
           </button>
