@@ -280,7 +280,7 @@ const Home = () => {
             <div className="bg-gradient-to-br from-indigo-100 to-purple-100 rounded-lg p-6 text-center transform hover:scale-110 transition-transform duration-300">
               <CheckCircle className="w-12 h-12 text-indigo-600 mx-auto mb-3" />
               <h3 className="font-semibold text-gray-800 mb-2">Safe Travel</h3>
-              <p className="text-sm text-gray-600">Certified & insured buses</p>
+              <p className="text-sm text-gray-600">Certified & insured traines</p>
             </div>
             <div className="bg-gradient-to-br from-pink-100 to-purple-100 rounded-lg p-6 text-center transform hover:scale-110 transition-transform duration-300">
               <Award className="w-12 h-12 text-pink-600 mx-auto mb-3" />
@@ -323,7 +323,7 @@ const Home = () => {
             <h3 className="text-xl font-semibold text-gray-800 mb-2">
               Track train
             </h3>
-            <p className="text-gray-600">Track your bus in real-time</p>
+            <p className="text-gray-600">Track your train in real-time</p>
           </button>
 
           <button
@@ -360,10 +360,10 @@ const Home = () => {
                 1
               </div>
               <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                Search Buses
+                Search traines
               </h3>
               <p className="text-gray-600 text-sm">
-                Enter your route and travel date to find available buses
+                Enter your route and travel date to find available traines
               </p>
             </div>
 
@@ -421,7 +421,7 @@ const Home = () => {
                 ))}
               </div>
               <p className="text-gray-600 mb-4">
-                "Excellent service! The booking process was smooth and the bus
+                "Excellent service! The booking process was smooth and the train
                 was on time. Highly recommended!"
               </p>
               <div className="flex items-center">
@@ -469,7 +469,7 @@ const Home = () => {
                 ))}
               </div>
               <p className="text-gray-600 mb-4">
-                "Best bus booking platform in Pakistan! Easy to use and reliable
+                "Best train booking platform in Pakistan! Easy to use and reliable
                 service."
               </p>
               <div className="flex items-center">
@@ -494,7 +494,7 @@ const Home = () => {
             </div>
             <div className="animate-count-up animation-delay-200">
               <p className="text-5xl font-bold mb-2">100+</p>
-              <p className="text-purple-100">Bus Routes</p>
+              <p className="text-purple-100">train Routes</p>
             </div>
             <div className="animate-count-up animation-delay-400">
               <p className="text-5xl font-bold mb-2">500+</p>
