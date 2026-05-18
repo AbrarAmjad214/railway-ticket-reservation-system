@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import {
-  Bus,
+  Train,
   Mail,
   Phone,
   MapPin,
@@ -17,11 +17,11 @@ const Footer = () => {
           {/* Company Info */}
           <div>
             <div className="flex items-center mb-4">
-              <Bus className="w-8 h-8 text-blue-500 mr-2" />
-              <span className="text-xl font-bold text-white">BusTicketing</span>
+              <Train className="w-8 h-8 text-blue-500 mr-2" />
+              <span className="text-xl font-bold text-white">Railway Ticket</span>
             </div>
             <p className="text-sm mb-4">
-              Your trusted partner for comfortable and safe bus travel across
+              Your trusted partner for comfortable and safe Train travel across
               Pakistan.
             </p>
             <div className="flex space-x-4">
@@ -119,8 +119,8 @@ const Footer = () => {
               <li className="flex items-start">
                 <Mail className="w-5 h-5 mr-2 mt-1 text-blue-400" />
                 <div>
-                  <p className="text-sm">support@busticket.com</p>
-                  <p className="text-sm">info@busticket.com</p>
+                  <p className="text-sm">support@Trainticket.com</p>
+                  <p className="text-sm">info@Trainticket.com</p>
                 </div>
               </li>
               <li className="flex items-start">
@@ -132,7 +132,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
-          <p>&copy; 2024 BusTicketing. All rights reserved.</p>
+          <p>&copy; 2024 TrainTicketing. All rights reserved.</p>
         </div>
       </div>
     </footer>
