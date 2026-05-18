@@ -13,14 +13,14 @@ const ContactSupport = () => {
 
   const faqs = [
     {
-      question: "How do I book a bus ticket?",
+      question: "How do I book a train ticket?",
       answer:
-        "You can book a ticket by searching for buses on the home page, selecting your preferred bus and seats, filling in passenger details, and completing the payment.",
+        "You can book a ticket by searching for traines on the home page, selecting your preferred train and seats, filling in passenger details, and completing the payment.",
     },
     {
       question: "Can I cancel my booking?",
       answer:
-        'Yes, you can cancel your booking from the "My Bookings" page. Cancellation policies may vary depending on the bus operator and time of cancellation.',
+        'Yes, you can cancel your booking from the "My Bookings" page. Cancellation policies may vary depending on the train operator and time of cancellation.',
     },
     {
       question: "What payment methods are accepted?",
@@ -28,14 +28,14 @@ const ContactSupport = () => {
         "We accept Credit/Debit cards, JazzCash, Easypaisa, and mobile wallet payments like Apple Pay and Google Pay.",
     },
     {
-      question: "How do I track my bus?",
+      question: "How do I track my train?",
       answer:
-        'You can track your bus using the "Track Bus" feature on the home page. Enter your booking ID to see real-time location updates.',
+        'You can track your train using the "Track train" feature on the home page. Enter your booking ID to see real-time location updates.',
     },
     {
-      question: "What if I miss my bus?",
+      question: "What if I miss my train?",
       answer:
-        "If you miss your bus, please contact our support team immediately. Refund policies vary by operator and circumstances.",
+        "If you miss your train, please contact our support team immediately. Refund policies vary by operator and circumstances.",
     },
     {
       question: "Can I change my seat after booking?",
