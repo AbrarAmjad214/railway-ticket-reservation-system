@@ -3,6 +3,17 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { User, Phone, Mail } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { Footer } from "../../components/layout";
+import { toast } from "react-toastify";
+import {
+  formatName,
+  formatPhone,
+  formatCnic,
+  isValidName,
+  isValidPhone,
+  isValidCnic,
+  MAX_NAME_LENGTH,
+  PHONE_LENGTH,
+} from "../../utils/formValidation";
 
 const PassengerInfo = () => {
   const location = useLocation();
@@ -57,11 +68,11 @@ const PassengerInfo = () => {
     // Initialize passenger forms if no saved data
     const initialForms = Array.from({ length: passengers }, (_, index) => ({
       id: index + 1,
-      name: user?.name || "",
+      name: formatName(user?.name || ""),
       gender: "",
       age: "",
       cnic: "",
-      phone: user?.phone || "",
+      phone: formatPhone(user?.phone || ""),
       email: user?.email || "",
     }));
     setPassengerForms(initialForms);
@@ -78,8 +89,18 @@ const PassengerInfo = () => {
   }, [passengerForms, bus, selectedSeats, date]);
 
   const updatePassenger = (index, field, value) => {
+    let formattedValue = value;
+
+    if (field === "name") {
+      formattedValue = formatName(value);
+    } else if (field === "phone") {
+      formattedValue = formatPhone(value);
+    } else if (field === "cnic") {
+      formattedValue = formatCnic(value);
+    }
+
     const updated = [...passengerForms];
-    updated[index] = { ...updated[index], [field]: value };
+    updated[index] = { ...updated[index], [field]: formattedValue };
     setPassengerForms(updated);
   };
 
@@ -96,15 +117,42 @@ const PassengerInfo = () => {
         !form.phone ||
         !form.email
       ) {
-        alert("Please fill all fields for all passengers");
+        toast.error("Please fill all fields for all passengers", {
+          position: "top-right",
+          autoClose: 3000,
+        });
         return;
       }
-      if (!/^\d{13}$/.test(form.cnic.replace(/-/g, ""))) {
-        alert("Please enter a valid 13-digit CNIC");
+
+      if (!isValidName(form.name)) {
+        toast.error(`Name must be 1-${MAX_NAME_LENGTH} characters`, {
+          position: "top-right",
+          autoClose: 3000,
+        });
         return;
       }
+
+      if (!isValidPhone(form.phone)) {
+        toast.error(`Phone number must be exactly ${PHONE_LENGTH} digits`, {
+          position: "top-right",
+          autoClose: 3000,
+        });
+        return;
+      }
+
+      if (!isValidCnic(form.cnic)) {
+        toast.error("CNIC must be exactly 13 digits (XXXXX-XXXXXXX-X)", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+        return;
+      }
+
       if (!/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(form.email)) {
-        alert("Please enter a valid email address");
+        toast.error("Please enter a valid email address", {
+          position: "top-right",
+          autoClose: 3000,
+        });
         return;
       }
     }
@@ -185,6 +233,7 @@ const PassengerInfo = () => {
                   </label>
                   <input
                     type="text"
+                    maxLength={MAX_NAME_LENGTH}
                     value={passenger.name}
                     onChange={(e) =>
                       updatePassenger(index, "name", e.target.value)
@@ -235,8 +284,10 @@ const PassengerInfo = () => {
                     CNIC / ID Number *
                   </label>
                   <input
-                    type="number"
-                    placeholder="12345-1234567-1"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={15}
+                    placeholder="35202-6079956-5"
                     value={passenger.cnic}
                     onChange={(e) =>
                       updatePassenger(index, "cnic", e.target.value)
@@ -245,7 +296,7 @@ const PassengerInfo = () => {
                     required
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Format: 12345-1234567-1
+                    Format: 35202-6079956-5
                   </p>
                 </div>
 
@@ -255,8 +306,10 @@ const PassengerInfo = () => {
                     Phone Number *
                   </label>
                   <input
-                    type="number"
-                    placeholder="03XX-XXXXXXX"
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={PHONE_LENGTH}
+                    placeholder="03001234567"
                     value={passenger.phone}
                     onChange={(e) =>
                       updatePassenger(index, "phone", e.target.value)

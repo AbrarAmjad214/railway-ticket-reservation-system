@@ -2,6 +2,17 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { authAPI } from "../../services/api";
+import { toast } from "react-toastify";
+import {
+  formatName,
+  formatPhone,
+  formatCnic,
+  isValidName,
+  isValidPhone,
+  isValidCnic,
+  MAX_NAME_LENGTH,
+  PHONE_LENGTH,
+} from "../../utils/formValidation";
 import {
   User,
   Mail,
@@ -14,7 +25,6 @@ import {
   Eye,
   EyeOff,
   CheckCircle,
-  Sparkles,
 } from "lucide-react";
 
 const Register = () => {
@@ -35,9 +45,19 @@ const Register = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    let formattedValue = value;
+
+    if (name === "name") {
+      formattedValue = formatName(value);
+    } else if (name === "phone") {
+      formattedValue = formatPhone(value);
+    } else if (name === "cnic") {
+      formattedValue = formatCnic(value);
+    }
+
     setFormData({
       ...formData,
-      [name]: value,
+      [name]: formattedValue,
     });
 
     // Calculate password strength
@@ -55,6 +75,28 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!isValidName(formData.name)) {
+      const message = `Name must be 1-${MAX_NAME_LENGTH} characters`;
+      setError(message);
+      toast.error(message, { position: "top-right", autoClose: 3000 });
+      return;
+    }
+
+    if (!isValidPhone(formData.phone)) {
+      const message = `Phone number must be exactly ${PHONE_LENGTH} digits`;
+      setError(message);
+      toast.error(message, { position: "top-right", autoClose: 3000 });
+      return;
+    }
+
+    if (!isValidCnic(formData.cnic)) {
+      const message = "CNIC must be exactly 13 digits (XXXXX-XXXXXXX-X)";
+      setError(message);
+      toast.error(message, { position: "top-right", autoClose: 3000 });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -170,6 +212,7 @@ const Register = () => {
                     name="name"
                     type="text"
                     required
+                    maxLength={MAX_NAME_LENGTH}
                     className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-gray-50 focus:bg-white"
                     placeholder="Enter your full name"
                     value={formData.name}
@@ -219,7 +262,9 @@ const Register = () => {
                     id="phone"
                     name="phone"
                     type="tel"
+                    inputMode="numeric"
                     required
+                    maxLength={PHONE_LENGTH}
                     className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-gray-50 focus:bg-white"
                     placeholder="03001234567"
                     value={formData.phone}
@@ -244,9 +289,11 @@ const Register = () => {
                     id="cnic"
                     name="cnic"
                     type="text"
+                    inputMode="numeric"
                     required
+                    maxLength={15}
                     className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-gray-50 focus:bg-white"
-                    placeholder="12345-1234567-1"
+                    placeholder="35202-6079956-5"
                     value={formData.cnic}
                     onChange={handleChange}
                   />

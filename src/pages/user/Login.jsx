@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { authAPI } from "../../services/api";
+import { toast } from "react-toastify";
 import {
   Mail,
   Lock,
@@ -50,7 +51,18 @@ const Login = () => {
         navigate("/");
       }
     } catch (error) {
-      setError(error.response?.data?.message || "Login failed");
+      const message =
+        error.response?.data?.message || "Login failed";
+      const errorText =
+        error.response?.status === 401
+          ? "Wrong password or invalid email"
+          : message;
+
+      setError(errorText);
+      toast.error(errorText, {
+        position: "top-right",
+        autoClose: 4000,
+      });
     } finally {
       setLoading(false);
     }
