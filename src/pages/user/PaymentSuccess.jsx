@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { CheckCircle, Loader2, AlertCircle } from "lucide-react";
+import { API_BASE_URL } from "../../services/api/axios";
 import { bookingAPI } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-toastify";
@@ -85,7 +86,7 @@ export default function PaymentSuccess() {
         // Verify payment session (optional but recommended)
         try {
           const verifyRes = await fetch(
-            `http://localhost:5000/api/payments/verify-session?session_id=${sessionId}`
+            `${API_BASE_URL}/payments/verify-session?session_id=${sessionId}`
           );
           if (verifyRes.ok) {
             const verifyData = await verifyRes.json();
