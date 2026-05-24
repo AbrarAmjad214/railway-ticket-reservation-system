@@ -34,6 +34,7 @@ import {
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import PaymentSuccess from "./pages/user/PaymentSuccess";
 import PaymentCancel from "./pages/user/PaymentCancel";
+import ResetPassword from "./pages/user/ResetPassword";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -43,6 +44,7 @@ function AppContent() {
   const hideNavbar =
     location.pathname === "/login" ||
     location.pathname === "/register" ||
+    location.pathname === "/reset-password" ||
     location.pathname === "/404" ||
     location.pathname === "/not-found" ||
     location.pathname.startsWith("/admin");
@@ -67,6 +69,7 @@ function AppContent() {
             <Route path="/ticket/:bookingId" element={<TicketView />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/contact" element={<ContactSupport />} />
             <Route path="/track-bus" element={<TrackBus />} />
             <Route path="/404" element={<NotFound />} />

@@ -1,4 +1,4 @@
-export const MAX_NAME_LENGTH = 25;
+export const MAX_NAME_LENGTH = 15;
 export const PHONE_LENGTH = 11;
 export const CNIC_LENGTH = 13;
 
@@ -22,3 +22,23 @@ export const isValidCnic = (cnic) =>
 
 export const isValidName = (name) =>
   name.trim().length > 0 && name.length <= MAX_NAME_LENGTH;
+
+export const MIN_PASSWORD_LENGTH = 8;
+export const PASSWORD_SPECIAL_CHAR_REGEX = /[^A-Za-z0-9]/;
+
+export const isValidEmail = (email) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+
+export const isValidPassword = (password) =>
+  password.length >= MIN_PASSWORD_LENGTH &&
+  PASSWORD_SPECIAL_CHAR_REGEX.test(password);
+
+export const getPasswordValidationMessage = (password) => {
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    return `Password must be at least ${MIN_PASSWORD_LENGTH} characters`;
+  }
+  if (!PASSWORD_SPECIAL_CHAR_REGEX.test(password)) {
+    return "Password must contain at least one special character";
+  }
+  return "";
+};

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { authAPI } from "../../services/api";
 import { toast } from "react-toastify";
+import ForgotPasswordModal from "../../components/common/ForgotPasswordModal";
 import {
   Mail,
   Lock,
@@ -22,6 +23,7 @@ const Login = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotModal, setShowForgotModal] = useState(false);
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -198,12 +200,13 @@ const Login = () => {
 
               {/* Forgot Password */}
               <div className="flex items-center justify-end">
-                <Link
-                  to="#"
+                <button
+                  type="button"
+                  onClick={() => setShowForgotModal(true)}
                   className="text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
                 >
                   Forgot password?
-                </Link>
+                </button>
               </div>
 
               {/* Submit Button */}
@@ -259,6 +262,11 @@ const Login = () => {
           </div>
         </div>
       </div>
+
+      <ForgotPasswordModal
+        isOpen={showForgotModal}
+        onClose={() => setShowForgotModal(false)}
+      />
     </div>
   );
 };
