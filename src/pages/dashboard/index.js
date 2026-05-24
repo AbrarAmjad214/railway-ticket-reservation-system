@@ -5,3 +5,4 @@ export { default as Trains } from "./Trains";
 export { default as Schedules } from "./Schedules";
 export { default as Bookings } from "./Bookings";
 export { default as BookingForm } from "./BookingForm";
+export { default as Coupons } from "./Coupons";

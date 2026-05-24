@@ -5,4 +5,5 @@ export { busBookingAPI, bookingAPI } from "./booking";
 export { cityAPI } from "./city";
 export { scheduleAPI } from "./schedule";
 export { trainAPI } from "./train";
+export { couponAPI } from "./coupon";
 export { default as api } from "./axios";

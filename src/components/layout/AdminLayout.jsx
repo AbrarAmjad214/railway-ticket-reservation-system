@@ -11,6 +11,7 @@ import {
   Menu,
   X,
   User,
+  Tag,
 } from "lucide-react";
 
 const AdminLayout = ({ children }) => {
@@ -59,6 +60,13 @@ const AdminLayout = ({ children }) => {
       path: "/admin/bookings",
       color: "text-orange-600",
       bgColor: "bg-orange-50",
+    },
+    {
+      name: "Coupons",
+      icon: Tag,
+      path: "/admin/coupons",
+      color: "text-pink-600",
+      bgColor: "bg-pink-50",
     },
   ];
 

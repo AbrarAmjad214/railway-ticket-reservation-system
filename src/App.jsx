@@ -30,6 +30,7 @@ import {
   Bookings,
   BookingForm,
   Users,
+  Coupons,
 } from "./pages/dashboard";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import PaymentSuccess from "./pages/user/PaymentSuccess";
@@ -152,6 +153,16 @@ function AppContent() {
                 <AdminRoute>
                   <AdminLayout>
                     <BookingForm />
+                  </AdminLayout>
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/coupons"
+              element={
+                <AdminRoute>
+                  <AdminLayout>
+                    <Coupons />
                   </AdminLayout>
                 </AdminRoute>
               }

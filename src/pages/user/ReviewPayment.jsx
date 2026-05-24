@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
 import { toast } from "react-toastify";
+import { couponAPI } from "../../services/api";
 
 function ReviewPayment() {
   const location = useLocation();
@@ -24,6 +25,8 @@ function ReviewPayment() {
   const [discount, setDiscount] = useState(0);
   const [processing, setProcessing] = useState(false);
   const [promoApplied, setPromoApplied] = useState(false);
+  const [appliedDiscountPercent, setAppliedDiscountPercent] = useState(0);
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
 
   // Stripe key - use environment variable or fallback
   // For production, set this in Vercel environment variables
@@ -99,18 +102,44 @@ function ReviewPayment() {
   const subtotal = baseFare + tax;
   const total = subtotal - discount;
 
-  const applyPromoCode = () => {
-    if (promoCode.toUpperCase() === "FIRST20") {
-      setDiscount(Math.round(subtotal * 0.2));
-      setPromoApplied(true);
-    } else if (promoCode.toUpperCase() === "STUDENT15") {
-      setDiscount(Math.round(subtotal * 0.15));
-      setPromoApplied(true);
-    } else if (promoCode) {
-      alert("Invalid promo code");
-      setPromoCode("");
-      setPromoApplied(false);
+  const applyPromoCode = async () => {
+    if (!promoCode.trim()) {
+      toast.error("Please enter a coupon code");
+      return;
     }
+
+    setApplyingCoupon(true);
+    try {
+      const response = await couponAPI.validateCoupon(
+        promoCode.trim(),
+        subtotal
+      );
+      const { discount: discountAmount, discountPercentage } = response.data;
+
+      setDiscount(discountAmount);
+      setAppliedDiscountPercent(discountPercentage);
+      setPromoApplied(true);
+      toast.success(
+        `Coupon applied! ${discountPercentage}% discount (Rs. ${discountAmount.toLocaleString()} off)`,
+        { position: "top-right", autoClose: 4000 }
+      );
+    } catch (error) {
+      setDiscount(0);
+      setPromoApplied(false);
+      setAppliedDiscountPercent(0);
+      const message =
+        error.response?.data?.message || "Invalid coupon code";
+      toast.error(message, { position: "top-right", autoClose: 4000 });
+    } finally {
+      setApplyingCoupon(false);
+    }
+  };
+
+  const removePromoCode = () => {
+    setPromoCode("");
+    setDiscount(0);
+    setPromoApplied(false);
+    setAppliedDiscountPercent(0);
   };
 
   const handleContinueToPayment = async () => {
@@ -599,9 +628,11 @@ function ReviewPayment() {
                   <div className="flex justify-between text-green-600 bg-green-50 p-3 rounded-lg">
                     <div className="flex items-center gap-2">
                       <CheckCircle className="w-5 h-5" />
-                      <span>Discount Applied</span>
+                      <span>
+                        Coupon ({appliedDiscountPercent}% off)
+                      </span>
                     </div>
-                    <span className="font-bold">-Rs. {discount}</span>
+                    <span className="font-bold">-Rs. {discount.toLocaleString()}</span>
                   </div>
                 )}
 
@@ -635,25 +666,29 @@ function ReviewPayment() {
                   />
                   <button
                     type="button"
-                    onClick={applyPromoCode}
-                    disabled={promoApplied || !promoCode}
-                    className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+                    onClick={promoApplied ? removePromoCode : applyPromoCode}
+                    disabled={applyingCoupon || (!promoApplied && !promoCode)}
+                    className={`px-6 py-3 rounded-lg font-semibold transition-all whitespace-nowrap ${
                       promoApplied
-                        ? "bg-green-500 text-white cursor-not-allowed"
+                        ? "bg-red-500 hover:bg-red-600 text-white"
                         : "bg-indigo-600 hover:bg-indigo-700 text-white disabled:bg-gray-300 disabled:cursor-not-allowed"
                     }`}
                   >
-                    {promoApplied ? "Applied" : "Apply"}
+                    {applyingCoupon
+                      ? "..."
+                      : promoApplied
+                        ? "Remove"
+                        : "Apply"}
                   </button>
                 </div>
                 {promoApplied && (
                   <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
                     <CheckCircle className="w-4 h-4" />
-                    Promo code applied successfully!
+                    {promoCode} applied — {appliedDiscountPercent}% discount
                   </p>
                 )}
                 <p className="text-xs text-gray-500 mt-2">
-                  Try: FIRST20 or STUDENT15
+                  Enter a coupon code created by admin
                 </p>
               </div>
 
